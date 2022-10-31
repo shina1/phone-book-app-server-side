@@ -2,135 +2,88 @@ import http from "http";
 import express from 'express';
 import {generateDate} from "./utils/generateDate.js";
 import {generateId} from "./utils/generateId.js";
-// import persons from "./db.json"
+import { phonebooks } from "./phonebook.js";
+import { guidGenerator } from "./utils/uuidGenerator.js";
 
-let notes = [
-  {
-    id: 1,
-    content: "HTML is easy",
-    date: "2022-05-30T17:30:31.098Z",
-    important: true
-  },
-  {
-    id: 2,
-    content: "Browser can execute only Javascript",
-    date: "2022-05-30T18:39:34.091Z",
-    important: false
-  },
-  {
-    id: 3,
-    content: "GET and POST are the most important methods of HTTP protocol",
-    date: "2022-05-30T19:20:14.298Z",
-    important: true
-  }
-]
-  let  persons = [
-    { 
-      name: "Arto Hellas", 
-      number: "040-123456",
-      id: 1
-    },
-    { 
-      name: "Ada Lovelace", 
-      number: "39-44-5323523",
-      id: 2
-    },
-    { 
-      name: "Dan Abramov", 
-      number: "12-43-234345",
-      id: 3
-    },
-    { 
-      name: "Mary Poppendieck", 
-      number: "39-23-6423122",
-      id: 4
-    }
-  ]
-
-// const app = http.createServer((req, res) => {
-//     res.writeHead(200, { 'Content-Type' : 'text/plain' });
-//     res.end(JSON.stringify(notes));
-// });
 const app = express();
 
-app.use(express.json())
+app.use(express.json());
 
-app.get('/',(req, res)=> {
-  res.send('<h1>Hello World!</h1>');
-})
-
-app.get('/api/notes', (req, res) => {
-  res.status(200).json({
-    status: "success",
-    message: "data fetched succefully",
-    payload: notes
-  })
-})
-app.get('/api/note/:id', (req, res)=> {
-  const id = Number(req.params.id);
-  const note = notes.find(note => note.id === id)
-  // console.log(typeof id);
- if(note){
-  res.status(200).json(
-    {
-      status: "success",
-      message: "data fetched succefully",
-      payload: note
-    }
-  )
- }else {
-  res.status(404).json(
-    {
-      status: "Failed",
-      message: "data not found",
-    }
-  )
- }
-});
-
-app.delete('/api/note/delete/:id', (req, res)=> {
-  const id = Number(req.params.id);
-  const returnedNotes = notes.filter(note => note.id !== id)
-  res.status(204).json(
-    {
-      status: "success",
-      message: "data deleted succefully",
-    }
-  )
-});
-
-app.post('/api/note/create', (req, res)=>{
-  const body = req.body;
-
-  if(!body.content){
-    res.status(400).json({
-      status: "Failed",
-      message: "No body content"
-    })
-  }
-  const newNote ={
-    id: generateId(notes),
-    content: body.content,
-    date: generateDate(),
-    important: body.important || false
-  }
- 
-    notes = notes.concat(newNote)
+//get all phonebook entries
+app.get('/api/phonebooks', (req, res) => {
     res.status(200).json({
-      status: "suceess",
-      message: 'note created',
-      payload: newNote
-    });
+        status:"success",
+        message: "Data fetched succefully",
+        payload: phonebooks
+    })
+});
+
+// get phonebok info
+app.get('/api/phonebooks/info', (req, res) => {
+    res.send(`<div>
+    <h2>Phonebook has info for ${phonebooks.length} people </h2>
+    <h3>${ new Date() }</h3>
+    </div>`)
 })
 
-app.get('/api/persons', (req, res) => {
-  res.status(200).json({
-    status: "success",
-    message: "data fetched succefully",
-    payload: persons
+// get a single phonebook entry
+app.get('/api/phonebooks/:id', (req, res) => {
+    const id = Number(req.params.id);
+    const phonebook = phonebooks.find(phone => phone.id === id)
+
+   if(phonebook){
+    res.status(200).json({
+        status: "success",
+        message: "Phonebok data found",
+        payload: phonebook,
+    })
+   }else{
+    res.status(404).json({
+        status: "Faillure",
+        message: `Contact with id ${id} does not exist`
+    })
+   }
+})
+
+//delete a phonebok entry
+
+app.delete('/api/phonebooks/delete/:id', (req, res) =>{
+    const id = Number(req.params.id)
+
+    const deleted = phonebooks.filter(phone => phone.id !== id)
+
+    res.status(204).end()
+})
+
+
+app.post('/api/phonebooks/create', (req, res)=>{
+    const body = req.body;
+    const checkName = phonebooks.find(phone => phone.name === body.name)
+    if(!body.name || !body.number){
+      res.status(400).json({
+        status: "Failed",
+        message: "No emtry name"
+      })
+    }
+    if(checkName){
+        res.status(400).json({
+            status: "Failed",
+            message: "Entry with such name already exist"
+          })
+    }
+    const newPhonebook ={
+      id: guidGenerator(),
+      name: body.name,
+      number: body.number
+    }
+   
+    //   notes = notes.concat(newNote)
+      res.status(200).json({
+        status: "suceess",
+        message: 'note created',
+        payload: newPhonebook
+      });
   })
-})
-
 const PORT = 3001;
 app.listen(PORT)
 console.log(`Server runninng on port ${PORT}`);
