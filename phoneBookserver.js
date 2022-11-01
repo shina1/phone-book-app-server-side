@@ -1,16 +1,17 @@
-import http from "http";
-import express from 'express';
-import {generateDate} from "./utils/generateDate.js";
-import {generateId} from "./utils/generateId.js";
+/* eslint-disable no-unused-vars */
+// import http from "http";
+import express from "express";
+import { generateDate } from "./utils/generateDate.js";
+import { generateId } from "./utils/generateId.js";
 // import persons from "./db.json"
 
 let notes = [
-  {
-    id: 1,
-    content: "HTML is easy",
-    date: "2022-05-30T17:30:31.098Z",
-    important: true
-  },
+    {
+        id: 1,
+        content: "HTML is easy",
+        date: "2022-05-30T17:30:31.098Z",
+        important: true
+    },
   {
     id: 2,
     content: "Browser can execute only Javascript",
@@ -25,48 +26,48 @@ let notes = [
   }
 ]
   let  persons = [
-    { 
-      name: "Arto Hellas", 
-      number: "040-123456",
-      id: 1
+    {
+        name: "Arto Hellas",
+        number: "040-123456",
+        id: 1
     },
-    { 
-      name: "Ada Lovelace", 
-      number: "39-44-5323523",
-      id: 2
+    {
+        name: "Ada Lovelace",
+        number: "39-44-5323523",
+        id: 2
     },
-    { 
-      name: "Dan Abramov", 
-      number: "12-43-234345",
-      id: 3
+    {
+        name: "Dan Abramov",
+        number: "12-43-234345",
+        id: 3
     },
-    { 
-      name: "Mary Poppendieck", 
-      number: "39-23-6423122",
-      id: 4
+    {
+        name: "Mary Poppendieck",
+        number: "39-23-6423122",
+        id: 4
     }
   ]
 
 // const app = http.createServer((req, res) => {
-//     res.writeHead(200, { 'Content-Type' : 'text/plain' });
+//     res.writeHead(200, { "Content-Type" : "text/plain" });
 //     res.end(JSON.stringify(notes));
 // });
 const app = express();
 
 app.use(express.json())
 
-app.get('/',(req, res)=> {
-  res.send('<h1>Hello World!</h1>');
+app.get("/",( req, res ) => {
+  res.send("<h1>Hello World!</h1>");
 })
 
-app.get('/api/notes', (req, res) => {
+app.get("/api/notes", (req, res) => {
   res.status(200).json({
     status: "success",
     message: "data fetched succefully",
     payload: notes
   })
 })
-app.get('/api/note/:id', (req, res)=> {
+app.get("/api/note/:id", (req, res) => {
   const id = Number(req.params.id);
   const note = notes.find(note => note.id === id)
   // console.log(typeof id);
@@ -88,7 +89,7 @@ app.get('/api/note/:id', (req, res)=> {
  }
 });
 
-app.delete('/api/note/delete/:id', (req, res)=> {
+app.delete("/api/note/delete/:id", (req, res) => {
   const id = Number(req.params.id);
   const returnedNotes = notes.filter(note => note.id !== id)
   res.status(204).json(
@@ -96,10 +97,10 @@ app.delete('/api/note/delete/:id', (req, res)=> {
       status: "success",
       message: "data deleted succefully",
     }
-  )
+  );
 });
 
-app.post('/api/note/create', (req, res)=>{
+app.post("/api/note/create", (req, res) => {
   const body = req.body;
 
   if(!body.content){
@@ -108,22 +109,22 @@ app.post('/api/note/create', (req, res)=>{
       message: "No body content"
     })
   }
-  const newNote ={
+  const newNote = {
     id: generateId(notes),
     content: body.content,
     date: generateDate(),
     important: body.important || false
   }
- 
+
     notes = notes.concat(newNote)
     res.status(200).json({
       status: "suceess",
-      message: 'note created',
+      message: "note created",
       payload: newNote
     });
 })
 
-app.get('/api/persons', (req, res) => {
+app.get("/api/persons", (req, res) => {
   res.status(200).json({
     status: "success",
     message: "data fetched succefully",

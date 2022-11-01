@@ -1,16 +1,22 @@
-import http from "http";
-import express from 'express';
-import {generateDate} from "./utils/generateDate.js";
-import {generateId} from "./utils/generateId.js";
+/* eslint-disable no-unused-vars */
+import express from "express";
+import cors from "cors";
+// import {generateDate} from "./utils/generateDate.js";
+// import {generateId} from "./utils/generateId.js";
 import { phonebooks } from "./phonebook.js";
 import { guidGenerator } from "./utils/uuidGenerator.js";
+import { requestLogger } from "./middleware/logger.js";
+import { unknownEndpoint } from "./middleware/unknownEndpoint.js";
 
 const app = express();
 
 app.use(express.json());
+app.use(requestLogger);
+app.use(unknownEndpoint);
+app.use(cors());
 
 //get all phonebook entries
-app.get('/api/phonebooks', (req, res) => {
+app.get("/api/phonebooks", (req, res) => {
     res.status(200).json({
         status:"success",
         message: "Data fetched succefully",
@@ -19,7 +25,7 @@ app.get('/api/phonebooks', (req, res) => {
 });
 
 // get phonebok info
-app.get('/api/phonebooks/info', (req, res) => {
+app.get("/api/phonebooks/info", (req, res) => {
     res.send(`<div>
     <h2>Phonebook has info for ${phonebooks.length} people </h2>
     <h3>${ new Date() }</h3>
@@ -27,7 +33,7 @@ app.get('/api/phonebooks/info', (req, res) => {
 })
 
 // get a single phonebook entry
-app.get('/api/phonebooks/:id', (req, res) => {
+app.get("/api/phonebooks/:id", (req, res) => {
     const id = Number(req.params.id);
     const phonebook = phonebooks.find(phone => phone.id === id)
 
@@ -47,7 +53,7 @@ app.get('/api/phonebooks/:id', (req, res) => {
 
 //delete a phonebok entry
 
-app.delete('/api/phonebooks/delete/:id', (req, res) =>{
+app.delete("/api/phonebooks/delete/:id", (req, res) => {
     const id = Number(req.params.id)
 
     const deleted = phonebooks.filter(phone => phone.id !== id)
@@ -56,7 +62,7 @@ app.delete('/api/phonebooks/delete/:id', (req, res) =>{
 })
 
 
-app.post('/api/phonebooks/create', (req, res)=>{
+app.post("/api/phonebooks/create", (req, res) => {
     const body = req.body;
     const checkName = phonebooks.find(phone => phone.name === body.name)
     if(!body.name || !body.number){
@@ -76,14 +82,17 @@ app.post('/api/phonebooks/create', (req, res)=>{
       name: body.name,
       number: body.number
     }
-   
+
     //   notes = notes.concat(newNote)
       res.status(200).json({
         status: "suceess",
-        message: 'note created',
+        message: "note created",
         payload: newPhonebook
       });
   })
-const PORT = 3001;
+
+
+// eslint-disable-next-line no-undef
+const PORT = process.env.PORT || 3001;
 app.listen(PORT)
 console.log(`Server runninng on port ${PORT}`);
