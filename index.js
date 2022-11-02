@@ -1,10 +1,16 @@
 /* eslint-disable no-unused-vars */
 // import http from "http";
+import dotenv from "dotenv"
 import express from "express";
 import { generateDate } from "./utils/generateDate.js";
 import { generateId } from "./utils/generateId.js";
+import cors from "cors";
+import { requestLogger } from "./middleware/logger.js";
+import  Note  from "./models/notesModel.js";
+import { errorHandler } from "./middleware/errorHandler.js";
+import { unknownEndpoint } from "./middleware/unknownEndpoint.js";
 // import persons from "./db.json"
-
+dotenv.config();
 let notes = [
     {
         id: 1,
@@ -55,82 +61,79 @@ let notes = [
 const app = express();
 
 app.use(express.json())
+app.use(requestLogger)
+app.use(cors())
 
 app.get("/",( req, res ) => {
-  res.send("<h1>Hello World!</h1>");
+  res.send("<h1>Welcome to your notes application</h1>");
 })
 
-app.get("/api/notes", (req, res) => {
-  res.status(200).json({
-    status: "success",
-    message: "data fetched succefully",
-    payload: notes
-  })
-})
-app.get("/api/note/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const note = notes.find(note => note.id === id)
-  // console.log(typeof id);
- if(note){
-  res.status(200).json(
-    {
-      status: "success",
-      message: "data fetched succefully",
-      payload: note
-    }
-  )
- }else {
-  res.status(404).json(
-    {
-      status: "Failed",
-      message: "data not found",
-    }
-  )
- }
-});
+// create a new note
+app.post( "/api/v1/notes", (request, response) => {
+  const body = request.body
 
-app.delete("/api/note/delete/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const returnedNotes = notes.filter(note => note.id !== id)
-  res.status(204).json(
-    {
-      status: "success",
-      message: "data deleted succefully",
-    }
-  );
-});
-
-app.post("/api/note/create", (req, res) => {
-  const body = req.body;
-
-  if(!body.content){
-    res.status(400).json({
-      status: "Failed",
-      message: "No body content"
-    })
+  if (body.content === undefined) {
+    return response.status(400).json({ error: "content missing" })
   }
-  const newNote = {
-    id: generateId(notes),
+
+  const note = new Note({
     content: body.content,
-    date: generateDate(),
-    important: body.important || false
-  }
+    important: body.important || false,
+    date: new Date(),
+  })
 
-    notes = notes.concat(newNote)
-    res.status(200).json({
-      status: "suceess",
-      message: "note created",
-      payload: newNote
-    });
-})
-
-app.get("/api/persons", (req, res) => {
-  res.status(200).json({
-    status: "success",
-    message: "data fetched succefully",
-    payload: persons
+  note.save().then(savedNote => {
+    response.json(savedNote)
   })
 })
+
+app.get("/api/v1/notes", (request, response) => {
+  Note.find({}).then(notes => {
+    response.json(notes)
+  })
+})
+
+app.delete("/api/v1/notes/:id", (request, response, next) => {
+  Note.findByIdAndRemove(request.params.id)
+    .then(result => {
+      response.status(204).end()
+    })
+    .catch(error => next(error))
+})
+
+app.get("/api/v1/notes/:id", (request, response, next) => {
+  Note.findById(request.params.id)
+    .then(note => {
+      if (note) {
+        response.json(note)
+      } else {
+        response.status(404).end()
+      }
+    })
+    .catch(error => {
+      next(error)
+    })
+})
+
+app.put("/api/v1/notes/:id", (request, response, next) => {
+  const body = request.body
+
+  const note = {
+    content: body.content,
+    important: body.important,
+  }
+
+  Note.findByIdAndUpdate(request.params.id, note, { new: true })
+    .then(updatedNote => {
+      response.json(updatedNote)
+    })
+    .catch(error => next(error))
+})
+
+
+app.use(unknownEndpoint)
+
+app.use(errorHandler)
 
 const PORT = 3005;
 app.listen(PORT)
